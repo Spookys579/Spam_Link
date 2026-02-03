@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Valentine - ADUNNI</title>
+  <style>
+    /* Card / page basics (keep your existing styles) */
+    .card { max-width: 700px; margin: 40px auto; padding: 20px; background:#fff; border-radius:10px; box-shadow:0 6px 24px rgba(0,0,0,.08); }
+
+    /* Fullscreen confetti canvas (non-interactive) */
+    #confettiCanvas {
+      position: fixed;
+      inset: 0;              /* top:0; right:0; bottom:0; left:0; */
+      width: 100%;
+      height: 100%;
+      pointer-events: none;  /* so clicks go through to the page */
+      z-index: 9999;
+    }
+
+    .hint { margin-top: 8px; color: #666; font-size: 0.95rem; }
+    .result { display:none; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <canvas id="confettiCanvas"></canvas>
+
+  <main class="card">
+    <h1>ADUNNI will you be my valentine?</h1>
+
+    <section id="zone">
+      <button id="yesBtn">Yes</button>
+      <button id="noBtn">No</button>
+    </section>
+
+    <div class="hint" id="hint">“No” seems a bit shy 😈</div>
+
+    <section class="result" id="result">
+      <h2>YAY! 🎉</h2>
+      <p>Thanks — this made my day!</p>
+    </section>
+  </main>
+
+  <script>
+    // Elements
+    const yesBtn = document.getElementById('yesBtn');
+    const noBtn  = document.getElementById('noBtn');
+    const zone   = document.getElementById('zone');
+    const result = document.getElementById('result');
+    const hint   = document.getElementById('hint');
+
+    /* ---------- CONFETTI (FIXED FULL SCREEN) ---------- */
+    const confettiCanvas = document.getElementById('confettiCanvas');
+    const ctx = confettiCanvas.getContext('2d');
+
+    function resizeConfettiCanvas() {
+      const dpr = window.devicePixelRatio || 1;
+      confettiCanvas.width = Math.round(window.innerWidth * dpr);
+      confettiCanvas.height = Math.round(window.innerHeight * dpr);
+      confettiCanvas.style.width = window.innerWidth + 'px';
+      confettiCanvas.style.height = window.innerHeight + 'px';
+      // Set transform so drawing coordinates use CSS pixels
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    window.addEventListener('resize', resizeConfettiCanvas);
+    resizeConfettiCanvas();
+
+    /* Simple confetti system */
+    let confettiParticles = [];
+    let confettiRunning = false;
+    let confettiRaf = null;
+
+    function random(min, max) { return Math.random() * (max - min) + min; }
+
+    function spawnConfetti(count = 80) {
+      const colors = ['#ff5e6c','#ffb86b','#ffe66d','#8be9fd','#c3f584'];
+      for (let i = 0; i < count; i++) {
+        confettiParticles.push({
+          x: random(0, window.innerWidth),
+          y: random(-50, -10),
+          vx: random(-1.5, 1.5),
+          vy: random(2, 6),
+          size: random(6, 12),
+          rot: random(0, Math.PI * 2),
+          vr: random(-0.1, 0.1),
+          color: colors[Math.floor(random(0, colors.length))],
+          tilt: random(-0.5, 0.5),
+          ttl: random(3.5, 6.0) // seconds
+        });
+      }
+    }
+
+    function updateAndDraw(dt) {
+      ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+
+      // dt in seconds
+      for (let i = confettiParticles.length - 1; i >= 0; i--) {
+        const p = confettiParticles[i];
+        p.x += p.vx * 60 * dt;
+        p.y += p.vy * 60 * dt;
+        p.vy += 0.05; // gravity-ish
+        p.rot += p.vr;
+        p.ttl -= dt;
+        if (p.y > window.innerHeight + 50 || p.ttl <= 0) {
+          confettiParticles.splice(i, 1);
+          continue;
+        }
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        // draw simple rectangle confetti
+       *
